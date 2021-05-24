@@ -1,0 +1,59 @@
+---
+title: "MovieLens  Rating Predictions"
+author: "Agustin Gallo"
+date: "2/4/2021"
+output: pdf_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r loading_dataset, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Introduction
+We can start this project by asking several questions about our surrounding world such as, How does Google give us options when we are typing a search, and we haven´t even search for anything like that before? How is it that Spotify create the famous "Your daily mix" for every single day? Or youTube and Netflix suggest a new video in order to keep you seeing more and more thing up to late hours at night?
+
+Well, all of them are recommendation systems, and its name says the recommend YOU new things given a specific context, but, what is this context? Well, it could be how you rate previous things, or which videos you've been watching past week, or even if according to your profile there are items other users with a profile similar to yours have a great rating, then, is probably you will like them too, therefor its a good recommendation and a good chance to consume the suggested product.
+
+In this project we will create a movie recommendation system using the dataset located in http://files.grouplens.org. the data used for this consist in two tables, the first of them "movies" consist in a list of movies containing their ID, title and genre. The second table "rating" consist in the rating provided per user to a given movie and the time when this rating was issued.
+
+You can see a glance of for both tables, next:
+movies table
+```{r movie_table_head, echo=FALSE}
+head(movies)
+
+```
+
+rating table
+```{r rating_table_head, echo=FALSE}
+head(ratings)
+```
+
+## Method
+
+
+## Results
+
+
+## Conclusion
+
+
+
+```{r cars}
+cars = 5+10
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

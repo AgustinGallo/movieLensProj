@@ -14,16 +14,26 @@ library(Metrics)
 ## -----------------------------------------
 ## Downloading files
 ## -----------------------------------------
-
-dl <- tempfile()
-download.file("http://files.grouplens.org/datasets/movielens/ml-10m.zip", dl)
-
-ratings <- fread(text = gsub("::", "\t", readLines(unzip(dl, "ml-10M100K/ratings.dat"))),
-                 col.names = c("userId", "movieId", "rating", "timestamp"))
-
-movies <- str_split_fixed(readLines(unzip(dl, "ml-10M100K/movies.dat")), "\\::", 3)
-colnames(movies) <- c("movieId", "title", "genres")
-
+if (!file.exists("ml-10M100K/ratings.dat")){
+  dl <- tempfile()
+  download.file("http://files.grouplens.org/datasets/movielens/ml-10m.zip", dl)
+  ratings <- fread(text = gsub("::", "\t", readLines(unzip(dl, "ml-10M100K/ratings.dat"))),
+                   col.names = c("userId", "movieId", "rating", "timestamp"))
+  
+  movies <- str_split_fixed(readLines(unzip(dl, "ml-10M100K/movies.dat")), "\\::", 3)
+  colnames(movies) <- c("movieId", "title", "genres")
+  
+}else{
+  if (!exists('ratings')){
+    ratings <- fread(text = gsub("::", "\t", readLines("ml-10M100K/ratings.dat")),
+                     col.names = c("userId", "movieId", "rating", "timestamp"))
+  }
+  if (!exists('movies')){
+    movies <- str_split_fixed(readLines("ml-10M100K/movies.dat"), "\\::", 3)
+    colnames(movies) <- c("movieId", "title", "genres")
+  }
+  
+}
 
 movies <- as.data.frame(movies) %>% mutate(movieId = as.numeric(movieId),
                                            title = as.character(title),
@@ -62,17 +72,17 @@ set.seed(1, sample.kind="Rounding")
 
 ## Evaluate RMSE
 ## Dummy evaluation without normalization
-dumy_predict <- mean(train_set$rating)
-Error_NoNorm <- rmse( train_set$rating , dumy_predict) ## Around 1.06 of error
+dumy_predict1 <- mean(edx$rating)
+Error_NoNorm <- rmse( edx$rating , dumy_predict1) ## Around 1.06 of error
 Error_NoNorm
 ## Evaluation using normalized ratings
 # Creating Normalized rating
-train_set <- edx %>% mutate(ratingN = rating - mean(rating)/sd(rating) )
+train_set <- edx %>% mutate(ratingN = (rating - mean(rating))/sd(rating) )
 
-dumy_predict <- mean(train_set$ratingN)
-sd_rating <- sd(train_set$rating)
+dumy_predict2 <- mean(train_set$ratingN)
+sd_rating <- sd(train_set$ratingN)
 
-Error_Norm <- rmse( train_set$ratingN , dumy_predict) ## Around 0.99 of error
+Error_Norm <- rmse( train_set$ratingN , dumy_predict2) ## Around 0.99 of error
 Error_Norm
 
 
@@ -129,7 +139,7 @@ genres_avg<-train_set %>%
 
 # Timestamp -> Very low importance, not to take into account, try it by year, week day, month
 train_set %>% 
-  group_by(month(as_datetime(timestamp))) %>% 
+  group_by(weekdays(as_datetime(timestamp))) %>% 
   filter(n()>=100) %>%
   summarize(b_t = mean(rating)) %>% 
   ggplot(aes(b_t)) + 
@@ -148,10 +158,10 @@ predicted_ratings <- predicted_ratings %>%
   mutate(pred = if_else(pred>5,5,if_else(pred<0,0,pred))) %>%
   pull(pred)
 
-rmse(validation$rating, predicted_ratings) ## Obtained 0.8647, pretty good, yeii
+RMSE_notPenalized <- rmse(validation$rating, predicted_ratings) ## Obtained 0.8647, pretty good, yeii
 
 ## Now using penalized least squares, with penalty term Lambda
-lambdas <- seq(0,10,0.25)
+lambdas <- seq(0,3,0.05)
 
 mu <- mean(train_set$rating)
 rmses <- sapply(lambdas, function(l){
@@ -171,7 +181,7 @@ rmses <- sapply(lambdas, function(l){
       summarize(b_g = sum(rating - mu - b_i - b_u)/(n()+l))
     
     predicted_ratings <- 
-      validation %>% 
+      train_set %>% 
       left_join(movie_avgs, by='movieId') %>%
       left_join(user_avg, by='userId') %>%
       left_join(genres_avg, by='genres') %>%
@@ -182,14 +192,14 @@ rmses <- sapply(lambdas, function(l){
       mutate(pred = if_else(pred>5,5,if_else(pred<0,0,pred))) %>%
       pull(pred)
     
-    return (rmse(validation$rating,predicted_ratings))
+    return (rmse(train_set$rating,predicted_ratings))
 })
 
 qplot(lambdas, rmses)
 
 lambda <- lambdas[which.min(rmses)] # Best Lambda is 4.75
 
-#Final model will be
+#With this, the final model will be:
 l <- lambda
 movie_avgs <- train_set %>% 
   group_by(movieId) %>% 
@@ -218,7 +228,7 @@ predicted_ratings <- predicted_ratings %>%
   mutate(pred = if_else(pred>5,5,if_else(pred<0,0,pred))) %>%
   pull(pred)
 
-RMSE <- rmse(validation$rating,predicted_ratings) ## Small improvement 0.8643
+RMSE_penalized <- rmse(validation_clean$rating,predicted_ratings) ## Small improvement 0.8643
 
 
 

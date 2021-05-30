@@ -1,3 +1,4 @@
 # Untracked files:
-MovieLens/ml-10M100K/*
-MovieLens/movieLens.RData
+ml-10M100K/*
+movieLens.RData
+.Rproj.user
